@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://admin:admin123@localhost:27017/esgdb?authSource=admin
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+
+jwt:
+  secret: esg-proposal-super-secret-key-must-be-long-enough-256bit
+  expiration-ms: 86400000  # 24 小時
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin123
+  bucket: esg-proposals
+
+admin:
+  default-employee-id: admin
+  default-password: Admin@1234
+  default-name: 系統管理員
+  default-department: AAID
