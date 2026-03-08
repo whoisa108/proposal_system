@@ -16,9 +16,10 @@ public class GlobalExceptionHandler {
     // 處理業務邏輯錯誤（RuntimeException）
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException e) {
+        String message = e.getMessage() != null ? e.getMessage() : "發生不明錯誤";
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of("message", message));
     }
 
     // 處理 @Valid 驗證失敗
