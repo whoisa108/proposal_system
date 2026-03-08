@@ -13,10 +13,7 @@ const schema = z
     employeeId: z.string().min(1, '請輸入工號'),
     name: z.string().min(1, '請輸入姓名'),
     department: z.string().min(1, '請選擇部門'),
-    password: z
-      .string()
-      .min(8, '密碼至少 8 個字元')
-      .regex(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/, '密碼需包含英文字母、數字及特殊符號'),
+    password: z.string(),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -85,7 +82,6 @@ export default function RegisterPage() {
               type="password"
               className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
             />
-            <p className="text-gray-400 text-xs mt-1">至少 8 字元，需含英文、數字及特殊符號</p>
             {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
