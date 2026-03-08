@@ -2,6 +2,8 @@ package com.esg.proposal.config;
 
 import com.esg.proposal.model.User;
 import com.esg.proposal.repository.UserRepository;
+import com.esg.proposal.model.Setting;
+import com.esg.proposal.repository.SettingRepository;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
+    private final SettingRepository settingRepository;
     private final PasswordEncoder passwordEncoder;
     private final MinioClient minioClient;
 
@@ -33,12 +36,29 @@ public class DataInitializer implements CommandLineRunner {
     @Value("${admin.default-department}")
     private String adminDepartment;
 
+    @Value("${user.default-employee-id}")
+    private String userEmployeeId;
+
+    @Value("${user.default-password}")
+    private String userPassword;
+
+    @Value("${user.default-name}")
+    private String userName;
+
+    @Value("${user.default-department}")
+    private String userDepartment;
+
+    @Value("${deadline.end-date}")
+    private String deadlineEndDate;
+
     @Value("${minio.bucket}")
     private String bucket;
 
     @Override
     public void run(String... args) throws Exception {
         createAdminIfNotExists();
+        createUserIfNotExists();
+        createDeadlineIfNotExists();
         createMinioBucketIfNotExists();
     }
 
@@ -52,6 +72,29 @@ public class DataInitializer implements CommandLineRunner {
             admin.setRole("ADMIN");
             userRepository.save(admin);
             log.info("Admin 帳號已建立，工號：{}", adminEmployeeId);
+        }
+    }
+
+    private void createUserIfNotExists() {
+        if (!userRepository.existsByEmployeeId(userEmployeeId)) {
+            User user = new User();
+            user.setEmployeeId(userEmployeeId);
+            user.setName(userName);
+            user.setDepartment(userDepartment);
+            user.setPassword(passwordEncoder.encode(userPassword));
+            user.setRole("USER");
+            userRepository.save(user);
+            log.info("User 帳號已建立，工號：{}", userEmployeeId);
+        }
+    }
+
+    private void createDeadlineIfNotExists() {
+        if (!settingRepository.existsByKey("DEADLINE")) {
+            Setting setting = new Setting();
+            setting.setKey("DEADLINE");
+            setting.setValue(deadlineEndDate);
+            settingRepository.save(setting);
+            log.info("Deadline 已建立，數值：{}", deadlineEndDate);
         }
     }
 

@@ -23,6 +23,15 @@ minio:
 
 admin:
   default-employee-id: admin
-  default-password: Admin@1234
+  default-password: admin
   default-name: 系統管理員
   default-department: AAID
+
+user:
+  default-employee-id: user
+  default-password: user
+  default-name: 測試帳號
+  default-department: AAID
+
+deadline:
+  end-date: 2026-03-15T23:59:59Z

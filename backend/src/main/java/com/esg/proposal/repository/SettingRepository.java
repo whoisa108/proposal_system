@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface SettingRepository extends MongoRepository<Setting, String> {
 
     Optional<Setting> findByKey(String key);
+
+    Boolean existsByKey(String key);
 }
