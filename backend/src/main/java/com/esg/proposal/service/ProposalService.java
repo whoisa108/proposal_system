@@ -121,6 +121,12 @@ public class ProposalService {
         proposalRepository.deleteById(proposalId);
     }
 
+    // 取得單一提案（by id）
+    public Proposal getById(String proposalId) {
+        return proposalRepository.findById(proposalId)
+                .orElseThrow(() -> new RuntimeException("找不到提案"));
+    }
+
     // 查看所有提案（Admin 用）
     public List<Proposal> getAll() {
         return proposalRepository.findAll();

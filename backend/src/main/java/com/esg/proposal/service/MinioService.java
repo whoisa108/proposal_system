@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+
 @Service
 @RequiredArgsConstructor
 public class MinioService {
@@ -26,6 +28,16 @@ public class MinioService {
                         .build()
         );
         return objectKey;
+    }
+
+    // 下載檔案，回傳 InputStream
+    public InputStream getObject(String objectKey) throws Exception {
+        return minioClient.getObject(
+                GetObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(objectKey)
+                        .build()
+        );
     }
 
     // 刪除檔案

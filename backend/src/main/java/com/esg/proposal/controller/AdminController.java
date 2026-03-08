@@ -6,16 +6,27 @@ import com.esg.proposal.model.AuditLog;
 import com.esg.proposal.model.Proposal;
 import com.esg.proposal.model.User;
 import com.esg.proposal.service.AdminService;
+import com.esg.proposal.service.MinioService;
 import com.esg.proposal.service.ProposalService;
 import com.esg.proposal.service.SettingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.InputStreamResource;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -24,6 +35,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final ProposalService proposalService;
+    private final MinioService minioService;
     private final SettingService settingService;
     private final ObjectMapper objectMapper;
 
@@ -65,6 +77,44 @@ public class AdminController {
     public ResponseEntity<Map<String, String>> deleteProposal(@PathVariable String id) throws Exception {
         proposalService.delete(id);
         return ResponseEntity.ok(Map.of("message", "提案已刪除"));
+    }
+
+    // 下載單一提案檔案
+    @GetMapping("/proposals/{id}/download")
+    public ResponseEntity<InputStreamResource> downloadProposalFile(@PathVariable("id") String id) throws Exception {
+        Proposal proposal = proposalService.getById(id);
+        InputStream is = minioService.getObject(proposal.getFilePath());
+        String encodedName = URLEncoder.encode(proposal.getFileName(), StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedName)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new InputStreamResource(is));
+    }
+
+    // 打包下載所有提案檔案（ZIP）
+    @GetMapping("/proposals/download-all")
+    public ResponseEntity<InputStreamResource> downloadAllProposals() throws Exception {
+        List<Proposal> proposals = proposalService.getAll();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            for (Proposal p : proposals) {
+                if (p.getFilePath() == null) continue;
+                try (InputStream is = minioService.getObject(p.getFilePath())) {
+                    zos.putNextEntry(new ZipEntry(p.getFileName()));
+                    is.transferTo(zos);
+                    zos.closeEntry();
+                } catch (Exception e) {
+                    // skip missing files
+                }
+            }
+        }
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"proposals.zip\"")
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .body(new InputStreamResource(bais));
     }
 
     // ---- 截止時間 ----

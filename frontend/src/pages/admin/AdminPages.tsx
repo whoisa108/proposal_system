@@ -8,6 +8,15 @@ import dayjs from 'dayjs'
 import type { Proposal, User, AuditLog, DeadlineSetting } from '../../types'
 import axios from 'axios'
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 // ---- 所有提案管理 ----
 export function AdminProposalsPage() {
   const queryClient = useQueryClient()
@@ -17,6 +26,16 @@ export function AdminProposalsPage() {
     queryKey: ['adminProposals'],
     queryFn: () => api.get<Proposal[]>('/admin/proposals').then((r) => r.data),
   })
+
+  async function handleDownloadAll() {
+    const res = await api.get('/admin/proposals/download-all', { responseType: 'blob' })
+    downloadBlob(res.data, 'proposals.zip')
+  }
+
+  async function handleDownload(p: Proposal) {
+    const res = await api.get(`/admin/proposals/${p.id}/download`, { responseType: 'blob' })
+    downloadBlob(res.data, p.fileName ?? p.title)
+  }
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/admin/proposals/${id}`),
@@ -30,7 +49,15 @@ export function AdminProposalsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-lg font-semibold mb-4">所有提案</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-lg font-semibold">所有提案</h1>
+        <button
+          onClick={handleDownloadAll}
+          className="text-sm border border-gray-300 rounded px-4 py-2 hover:bg-gray-50"
+        >
+          ↓ 下載全部 (ZIP)
+        </button>
+      </div>
       <table className="w-full text-sm border border-gray-200">
         <thead>
           <tr className="bg-gray-50">
@@ -57,6 +84,7 @@ export function AdminProposalsPage() {
               <td className="border border-gray-200 px-3 py-2">
                 <div className="flex gap-2">
                   <Link to={`/admin/proposals/${p.id}/edit`} className="text-blue-600 hover:underline">編輯</Link>
+                  <button onClick={() => handleDownload(p)} className="text-green-600 hover:underline">下載</button>
                   <button onClick={() => setDeleteTarget(p)} className="text-red-600 hover:underline">刪除</button>
                 </div>
               </td>
