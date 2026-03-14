@@ -1,3 +1,5 @@
 .agents
-.secrets.baseline
 .vscode
+
+# Environment variables
+.env

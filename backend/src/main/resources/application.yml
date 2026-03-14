@@ -4,7 +4,7 @@ server:
 spring:
   data:
     mongodb:
-      uri: mongodb://admin:admin123@localhost:27017/esgdb?authSource=admin
+      uri: ${MONGODB_URI}
 
   servlet:
     multipart:
@@ -12,24 +12,24 @@ spring:
       max-request-size: 10MB
 
 jwt:
-  secret: esg-proposal-super-secret-key-must-be-long-enough-256bit
+  secret: ${JWT_SECRET}
   expiration-ms: 86400000  # 24 小時
 
 minio:
-  endpoint: http://localhost:9000
-  access-key: minioadmin
-  secret-key: minioadmin123
+  endpoint: ${MINIO_ENDPOINT}
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
   bucket: esg-proposals
 
 admin:
-  default-employee-id: admin
-  default-password: admin
+  default-employee-id: ${ADMIN_EMPLOYEE_ID}
+  default-password: ${ADMIN_PASSWORD}
   default-name: 系統管理員
   default-department: AAID
 
 user:
-  default-employee-id: user
-  default-password: user
+  default-employee-id: ${USER_EMPLOYEE_ID}
+  default-password: ${USER_PASSWORD}
   default-name: 測試帳號
   default-department: AAID
 
