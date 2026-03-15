@@ -1,0 +1,8 @@
+# jackson-core GHSA-72hv-8253-57qq
+# DoS via Number Length Constraint Bypass in Async Parser.
+# Current version 2.19.0 has no patch in the 2.19.x branch.
+# Fix exists in 2.18.6 (older branch) and 2.21.1 (not yet released).
+# Downgrading to 2.18.x would break Spring Boot 3.5.0 compatibility.
+# Accept risk: internal service, not directly exposed to untrusted input streams.
+# Re-evaluate when Spring Boot 3.5.x ships with a patched jackson-core 2.19.x.
+GHSA-72hv-8253-57qq
