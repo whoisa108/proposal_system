@@ -36,15 +36,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin
+          trivy --version
+
       - name: Run Trivy (CRITICAL & HIGH CVEs)
-        uses: aquasecurity/trivy-action@0.31.0
-        with:
-          scan-type: fs
-          scan-ref: frontend
-          format: sarif
-          output: trivy-results.sarif
-          severity: CRITICAL,HIGH
-          exit-code: '1'
+        run: |
+          trivy fs frontend \
+            --format sarif \
+            --output trivy-results.sarif \
+            --severity CRITICAL,HIGH \
+            --exit-code 1
 
       - name: Upload Trivy results to GitHub Security
         if: always()
