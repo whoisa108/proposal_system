@@ -1,0 +1,127 @@
+name: Build & Push Docker Images
+
+# Triggers when app code changes on main.
+# Separate from CI (backend-ci / frontend-ci) which runs tests.
+# This workflow builds production Docker images and tells ArgoCD to deploy.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/cd-image-build.yml'
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/esg-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/esg-frontend
+
+jobs:
+  # ── Job 1: Build & push backend image ─────────────────────────────────────
+  build-backend:
+    name: Build backend image
+    runs-on: ubuntu-latest
+    # Without these permissions, the runner cannot push to GHCR
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Set up Docker Buildx: enables advanced build features like
+      # layer caching, multi-platform builds, and faster rebuilds.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # GITHUB_TOKEN is automatically provided by GitHub Actions.
+      # No manual secret setup needed for GHCR.
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build and push two tags:
+      #   :latest       → always points to the newest build
+      #   :abc1234      → the exact git commit SHA (for rollback traceability)
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          # Use GitHub Actions cache to speed up repeated builds.
+          # If pom.xml didn't change, the Maven layer is reused.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Job 2: Build & push frontend image ────────────────────────────────────
+  build-frontend:
+    name: Build frontend image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Job 3: Update image tags in k8s/ manifests ────────────────────────────
+  # This job runs AFTER both images are successfully pushed.
+  # It updates the image tags in the deployment YAMLs and commits back to Git.
+  # ArgoCD detects this new commit and deploys the new version automatically.
+  update-manifests:
+    name: Update k8s image tags
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # Required to commit back to the repo
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Use GITHUB_TOKEN so the bot can push the commit
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Replace the image tag in the manifest files.
+      # Before: ghcr.io/whoisa108/esg-backend:abc123
+      # After:  ghcr.io/whoisa108/esg-backend:def456
+      - name: Update image tags in manifests
+        run: |
+          SHA=${{ github.sha }}
+          sed -i "s|esg-backend:.*|esg-backend:${SHA}|g" k8s/backend/deployment.yaml
+          sed -i "s|esg-frontend:.*|esg-frontend:${SHA}|g" k8s/frontend/deployment.yaml
+
+      # Commit and push only if the manifests actually changed.
+      # The "git diff --staged --quiet || ..." ensures we don't create
+      # empty commits if somehow the SHA was already set.
+      - name: Commit and push updated manifests
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add k8s/backend/deployment.yaml k8s/frontend/deployment.yaml
+          git diff --staged --quiet || \
+            git commit -m "ci: update image tags to ${GITHUB_SHA:0:7}" && \
+            git push
