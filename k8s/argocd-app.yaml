@@ -14,8 +14,10 @@ spec:
 
   source:
     repoURL: https://github.com/whoisa108/proposal_system.git
-    targetRevision: main   # watch the main branch
-    path: k8s              # only watch the k8s/ folder (ignore backend/, frontend/, etc.)
+    targetRevision: main
+    path: k8s
+    directory:
+      recurse: true   # scan k8s/backend/, k8s/frontend/ subdirectories too
 
   destination:
     server: https://kubernetes.default.svc   # "this cluster"
