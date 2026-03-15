@@ -1,0 +1,14 @@
+# PersistentVolumeClaim: 向 K3s 要一塊磁碟空間給 MongoDB 存資料。
+# K3s 內建 local-path-provisioner，會自動在節點上建立對應的目錄。
+# 如果沒有 PVC，Pod 重啟後資料會消失。
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+  namespace: esg
+spec:
+  accessModes:
+    - ReadWriteOnce   # 同時只能被一個 Pod 掛載（適合資料庫）
+  resources:
+    requests:
+      storage: 2Gi
