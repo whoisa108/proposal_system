@@ -18,7 +18,7 @@ spec:
       containers:
         - name: frontend
           # IMPORTANT: Replace YOUR_GITHUB_USERNAME with your GitHub username.
-          image: ghcr.io/whoisa108/esg-frontend:latest
+          image: ghcr.io/whoisa108/esg-frontend:a3268f69dd369b37982ccf86d11848aae4851dad
           ports:
             - containerPort: 80
           # nginx serves static files — it starts instantly, so a simple

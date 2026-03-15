@@ -19,7 +19,7 @@ spec:
         - name: backend
           # IMPORTANT: Replace YOUR_GITHUB_USERNAME with your GitHub username.
           # The CI workflow will automatically update this tag on every push.
-          image: ghcr.io/whoisa108/esg-backend:latest
+          image: ghcr.io/whoisa108/esg-backend:a3268f69dd369b37982ccf86d11848aae4851dad
           ports:
             - containerPort: 8080
 
