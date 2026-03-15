@@ -19,7 +19,7 @@
     <properties>
         <java.version>17</java.version>
         <jjwt.version>0.12.6</jjwt.version>
-        <minio.version>8.6.0</minio.version>
+        <minio.version>8.5.10</minio.version>
 
         <!-- CVE fixes: override Spring Boot BOM managed versions -->
         <tomcat.version>10.1.45</tomcat.version>

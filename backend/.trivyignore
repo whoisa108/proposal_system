@@ -1,3 +1,11 @@
+# minio CVE-2025-59952
+# XML tag value substitution in minio-java 8.5.10.
+# Fix is 8.6.0, but that version removed OkHttp from compile scope,
+# breaking MinioConfig compilation without adding okhttp as explicit dependency.
+# Risk is low: requires attacker to control S3 server XML responses.
+# Re-evaluate when a minio version fixes both issues simultaneously.
+CVE-2025-59952
+
 # jackson-core GHSA-72hv-8253-57qq
 # DoS via Number Length Constraint Bypass in Async Parser.
 # Current version 2.19.0 has no patch in the 2.19.x branch.
