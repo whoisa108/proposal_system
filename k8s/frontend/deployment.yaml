@@ -1,0 +1,30 @@
+# Deployment for the React frontend served by nginx.
+# No secrets needed — it's just static files + a proxy config.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: esg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          # IMPORTANT: Replace YOUR_GITHUB_USERNAME with your GitHub username.
+          image: ghcr.io/whoisa108/esg-frontend:latest
+          ports:
+            - containerPort: 80
+          # nginx serves static files — it starts instantly, so a simple
+          # TCP readiness check is enough (no need for /actuator/health).
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10

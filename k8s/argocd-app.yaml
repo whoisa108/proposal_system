@@ -1,0 +1,29 @@
+# ArgoCD Application — the core GitOps object.
+#
+# This tells ArgoCD:
+#   - WHERE to find the manifests (GitHub repo + which folder)
+#   - WHERE to deploy them (this K3s cluster + esg namespace)
+#   - HOW to sync (automatically, self-healing)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: esg-app
+  namespace: argocd   # ArgoCD itself lives in argocd namespace
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/whoisa108/proposal_system.git
+    targetRevision: main   # watch the main branch
+    path: k8s              # only watch the k8s/ folder (ignore backend/, frontend/, etc.)
+
+  destination:
+    server: https://kubernetes.default.svc   # "this cluster"
+    namespace: esg
+
+  syncPolicy:
+    automated:
+      prune: true      # if you delete a file from k8s/, delete it from cluster too
+      selfHeal: true   # if someone manually edits the cluster, revert it back to match Git
+    syncOptions:
+      - CreateNamespace=true   # auto-create the esg namespace if it doesn't exist

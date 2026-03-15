@@ -35,3 +35,14 @@ user:
 
 deadline:
   end-date: 2026-03-15T23:59:59Z
+
+# Actuator: only expose the health endpoint (used by Kubernetes probes)
+# Never expose /actuator/env or /actuator/beans in production — they leak config
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

@@ -38,7 +38,8 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html")
+                                "/swagger-ui.html",
+                                "/actuator/health")  // K8s liveness/readiness probes (no JWT)
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/settings/deadline").permitAll()
                         // Admin only

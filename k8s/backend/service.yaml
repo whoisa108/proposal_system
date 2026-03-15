@@ -1,0 +1,14 @@
+# Service gives the backend a stable internal address.
+# Pods get random IP addresses when restarted — Services don't change.
+# Other Pods (e.g. frontend nginx) call "backend-svc:8080" to reach us.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-svc
+  namespace: esg
+spec:
+  selector:
+    app: backend   # Routes traffic to any Pod with label app=backend
+  ports:
+    - port: 8080
+      targetPort: 8080

@@ -1,0 +1,19 @@
+# ConfigMap holds non-sensitive configuration.
+# These become environment variables inside the backend Pod.
+# Safe to commit — no passwords here.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: esg
+data:
+  # Spring reads SPRING_DATA_MONGODB_DATABASE to know which DB to use.
+  # (The full URI with credentials comes from the Secret below.)
+  SPRING_DATA_MONGODB_DATABASE: "esg"
+
+  SERVER_PORT: "8080"
+
+  # backend-svc is the Kubernetes Service name for MinIO (internal DNS).
+  # Inside the cluster, Services are reachable by their name.
+  MINIO_ENDPOINT: "http://minio-svc:9000"
+  MINIO_BUCKET_NAME: "esg-proposals"

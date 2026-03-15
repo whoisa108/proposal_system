@@ -1,0 +1,53 @@
+# Deployment tells K8s: "always keep 1 copy of the backend Pod running,
+# using this image. Restart it if it crashes. Roll it out without downtime."
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: esg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend   # This Deployment "owns" Pods with the label app=backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          # IMPORTANT: Replace YOUR_GITHUB_USERNAME with your GitHub username.
+          # The CI workflow will automatically update this tag on every push.
+          image: ghcr.io/whoisa108/esg-backend:latest
+          ports:
+            - containerPort: 8080
+
+          # envFrom injects every key in the ConfigMap / Secret as an
+          # environment variable. Spring Boot reads these at startup.
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            - secretRef:
+                name: backend-secret   # Created by Sealed Secrets (Step 7)
+
+          # readinessProbe: K8s checks this before routing any traffic to the Pod.
+          # If it fails, the Pod is temporarily removed from the Service —
+          # users never hit an unready Pod.
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30   # Spring Boot needs ~20s to start
+            periodSeconds: 10
+            failureThreshold: 3
+
+          # livenessProbe: K8s checks this while the Pod is running.
+          # If it fails 3 times in a row, K8s restarts the Pod automatically.
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
